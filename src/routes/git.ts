@@ -2,6 +2,7 @@ import { handleGitRequest } from "../git/http-backend";
 import { ensureRepoForPush } from "../services/repo-service";
 import { validateSlug } from "../git/paths";
 import { touchRepo } from "../db/repos";
+import { invalidateCache } from "../services/pages-service";
 import { getClientIp } from "../middleware/rate-limiter";
 import {
   checkPushSize,
@@ -59,6 +60,7 @@ export async function handleGitHttp(request: Request): Promise<Response | undefi
         request.headers.get("content-type")
       );
       touchRepo(slug).catch(() => {});
+      invalidateCache(slug).catch(() => {});
       return resp;
     }
 
