@@ -1,9 +1,10 @@
 import { Elysia } from "elysia";
+import { existsSync } from "fs";
 import { listRepos, getRepoCount, searchRepos } from "../db/repos";
 import { homePage } from "../views/pages/home";
 import { newRepoPage } from "../views/pages/new-repo";
 import { createRepo } from "../services/repo-service";
-import { validateSlug } from "../git/paths";
+import { validateSlug, repoPath } from "../git/paths";
 import { validateDescription, validateSearchQuery } from "../middleware/input-validator";
 import { getClientIp } from "../middleware/rate-limiter";
 import { scoreWriteRequest, isBanned, checkBannedPatterns } from "../middleware/spam-detector";
@@ -32,8 +33,9 @@ export const homeRoutes = new Elysia()
       repos = await searchRepos(cleanQ);
       count = repos.length;
     } else {
-      repos = await listRepos();
-      count = await getRepoCount();
+      const allRepos = await listRepos();
+      repos = allRepos.filter(repo => existsSync(repoPath(repo.slug)));
+      count = repos.length;
     }
     return new Response(homePage(repos, count), {
       headers: { "content-type": "text/html" },

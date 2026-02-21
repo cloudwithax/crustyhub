@@ -25,7 +25,13 @@ export async function createRepo(slug: string, description = "", createdVia = "w
   }
 
   await gitInit(path);
-  return reposDb.createRepo(slug, description, createdVia);
+  const repo = await reposDb.createRepo(slug, description, createdVia);
+  
+  // Save bundle to DB so repo survives container restarts
+  const tarball = tarDirectory(path);
+  await reposDb.saveBundle(repo.id, tarball);
+  
+  return repo;
 }
 
 export async function ensureRepoForPush(slug: string): Promise<void> {
