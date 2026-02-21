@@ -1,12 +1,13 @@
 import { layout } from "../layout";
 
-export function newRepoPage(error?: string): string {
+export function newRepoPage(error?: string, csrfToken?: string): string {
   return layout("new repo", `
     <div class="container-narrow">
       <h1>create a new repository</h1>
       <p>or just <code>git push</code> to any url and it'll be created automatically.</p>
       ${error ? `<div class="alert alert-error">${error}</div>` : ""}
       <form method="POST" action="/new" class="form">
+        ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
         <div class="form-group">
           <label for="slug">repository name</label>
           <input type="text" id="slug" name="slug" required

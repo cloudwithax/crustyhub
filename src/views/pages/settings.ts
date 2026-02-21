@@ -2,13 +2,14 @@ import { layout, escHtml } from "../layout";
 import type { Repo } from "../../db/repos";
 import type { BranchInfo } from "../../git/read";
 
-export function settingsPage(repo: Repo, branches: BranchInfo[], message?: string): string {
+export function settingsPage(repo: Repo, branches: BranchInfo[], message?: string, csrfToken?: string): string {
   return layout(`${repo.slug} settings`, `
     <div class="repo-header">
       <h1><a href="/${escHtml(repo.slug)}">${escHtml(repo.slug)}</a> / settings</h1>
     </div>
     ${message ? `<div class="alert alert-success">${escHtml(message)}</div>` : ""}
     <form method="POST" action="/${escHtml(repo.slug)}/settings" class="form">
+        ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
       <div class="form-group">
         <label for="description">description</label>
         <input type="text" id="description" name="description" value="${escHtml(repo.description || "")}">
@@ -25,9 +26,11 @@ export function settingsPage(repo: Repo, branches: BranchInfo[], message?: strin
     <div class="danger-zone">
       <h3>danger zone</h3>
       <form method="POST" action="/${escHtml(repo.slug)}/delete" onsubmit="return confirm('are you sure? this cannot be undone.')">
+        ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
         <button type="submit" class="btn btn-danger">delete repository</button>
       </form>
       <form method="POST" action="/${escHtml(repo.slug)}/fork" class="form" style="margin-top:1rem">
+        ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
         <div class="form-group">
           <label for="fork_name">fork as</label>
           <input type="text" id="fork_name" name="fork_name" placeholder="${escHtml(repo.slug)}-fork" required>

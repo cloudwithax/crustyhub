@@ -14,7 +14,8 @@ export function repoHomePage(
   defaultBranch: string,
   hasCommits: boolean,
   starred: boolean,
-  openIssues: number
+  openIssues: number,
+  csrfToken?: string
 ): string {
   const cloneUrl = `${BASE_URL}/${repo.slug}.git`;
 
@@ -25,6 +26,7 @@ export function repoHomePage(
         <p class="repo-desc">${escHtml(repo.description || "")}</p>
         <div class="repo-actions">
           <form method="POST" action="/${escHtml(repo.slug)}/star" style="display:inline">
+            ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
             <button class="btn btn-sm">${starred ? "★ unstar" : "☆ star"} (${repo.star_count})</button>
           </form>
           <a href="/${escHtml(repo.slug)}/issues" class="btn btn-sm">issues (${openIssues})</a>
@@ -108,6 +110,7 @@ git push -u origin main</code></pre>
       <p class="repo-desc">${escHtml(repo.description || "")}</p>
       <div class="repo-actions">
         <form method="POST" action="/${escHtml(repo.slug)}/star" style="display:inline">
+            ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
           <button class="btn btn-sm">${starred ? "★ unstar" : "☆ star"} (${repo.star_count})</button>
         </form>
         <a href="/${escHtml(repo.slug)}/issues" class="btn btn-sm">issues (${openIssues})</a>

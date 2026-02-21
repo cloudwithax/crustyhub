@@ -28,13 +28,14 @@ export function issuesPage(repo: Repo, issues: Issue[], state: string, openCount
   `);
 }
 
-export function newIssuePage(repo: Repo, error?: string): string {
+export function newIssuePage(repo: Repo, error?: string, csrfToken?: string): string {
   return layout(`${repo.slug} - new issue`, `
     <div class="repo-header">
       <h1><a href="/${escHtml(repo.slug)}">${escHtml(repo.slug)}</a> / <a href="/${escHtml(repo.slug)}/issues">issues</a> / new</h1>
     </div>
     ${error ? `<div class="alert alert-error">${escHtml(error)}</div>` : ""}
     <form method="POST" action="/${escHtml(repo.slug)}/issues/new" class="form">
+        ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
       <div class="form-group">
         <label for="title">title</label>
         <input type="text" id="title" name="title" required autofocus>
@@ -52,7 +53,7 @@ export function newIssuePage(repo: Repo, error?: string): string {
   `);
 }
 
-export function issueDetailPage(repo: Repo, issue: Issue, comments: { body_markdown: string; author_name: string; created_at: Date }[], renderedBody: string, renderedComments: string[]): string {
+export function issueDetailPage(repo: Repo, issue: Issue, comments: { body_markdown: string; author_name: string; created_at: Date }[], renderedBody: string, renderedComments: string[], csrfToken?: string): string {
   return layout(`${repo.slug} #${issue.number}`, `
     <div class="repo-header">
       <h1><a href="/${escHtml(repo.slug)}">${escHtml(repo.slug)}</a> / <a href="/${escHtml(repo.slug)}/issues">issues</a> / #${issue.number}</h1>
@@ -80,6 +81,7 @@ export function issueDetailPage(repo: Repo, issue: Issue, comments: { body_markd
     <div class="comment-form">
       <h3>add a comment</h3>
       <form method="POST" action="/${escHtml(repo.slug)}/issues/${issue.number}/comment" class="form">
+          ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
         <div class="form-group">
           <textarea name="body" rows="5" required placeholder="leave a comment (markdown supported)"></textarea>
         </div>
@@ -89,6 +91,7 @@ export function issueDetailPage(repo: Repo, issue: Issue, comments: { body_markd
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">comment</button>
           <form method="POST" action="/${escHtml(repo.slug)}/issues/${issue.number}/toggle" style="display:inline">
+            ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
             <button type="submit" class="btn btn-sm">${issue.state === "open" ? "close issue" : "reopen issue"}</button>
           </form>
         </div>
