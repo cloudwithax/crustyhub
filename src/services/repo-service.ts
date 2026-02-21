@@ -1,4 +1,4 @@
-import { mkdir, rename } from "fs/promises";
+import { mkdir, rename, rm } from "fs/promises";
 import { existsSync } from "fs";
 import { repoPath, trashPath, validateSlug } from "../git/paths";
 import { gitInit } from "../git/git-spawn";
@@ -79,4 +79,55 @@ export async function forkRepo(sourceSlug: string, newSlug: string): Promise<rep
   }
 
   return reposDb.createRepo(newSlug, `Fork of ${sourceSlug}`, "fork", null, source.id);
+}
+
+export function tarDirectory(dirPath: string): Buffer {
+  const result = Bun.spawnSync(["tar", "-czf", "-", "-C", dirPath, "."], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (result.exitCode !== 0) {
+    throw new Error(`tar failed: ${Buffer.from(result.stderr).toString()}`);
+  }
+  return Buffer.from(result.stdout);
+}
+
+export function untarToDirectory(tarball: Buffer, destPath: string): void {
+  const result = Bun.spawnSync(["tar", "-xzf", "-", "-C", destPath], {
+    stdin: tarball,
+    stderr: "pipe",
+  });
+  if (result.exitCode !== 0) {
+    throw new Error(`untar failed: ${Buffer.from(result.stderr).toString()}`);
+  }
+}
+
+export async function bundleRepo(slug: string): Promise<void> {
+  const repo = await reposDb.findRepoBySlug(slug);
+  if (!repo) return;
+
+  const path = repoPath(slug);
+  if (!existsSync(path)) return;
+
+  const tarball = tarDirectory(path);
+  await reposDb.saveBundle(repo.id, tarball);
+}
+
+export async function restoreRepos(): Promise<void> {
+  const bundles = await reposDb.getAllBundles();
+  let restored = 0;
+
+  for (const { slug, bundle } of bundles) {
+    const path = repoPath(slug);
+    if (existsSync(path)) continue;
+
+    await mkdir(path, { recursive: true });
+    untarToDirectory(bundle, path);
+    restored++;
+    console.log(`restored repo from db: ${slug}`);
+  }
+
+  if (restored > 0) {
+    console.log(`restored ${restored} repo(s) from database`);
+  }
 }
