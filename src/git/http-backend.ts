@@ -1,4 +1,5 @@
 import { REPOS_DIR, GIT_HTTP_BACKEND } from "../config/env";
+import { GIT_BACKEND_TIMEOUT_MS } from "../config/env";
 
 export async function handleGitRequest(
   method: string,
@@ -27,6 +28,10 @@ export async function handleGitRequest(
     stdout: "pipe",
     stderr: "pipe",
   });
+
+  const timeout = setTimeout(() => {
+    try { proc.kill(); } catch {}
+  }, GIT_BACKEND_TIMEOUT_MS);
 
   if (requestBody && proc.stdin) {
     const writer = proc.stdin;
@@ -98,6 +103,7 @@ export async function handleGitRequest(
           controller.enqueue(value);
         }
       } finally {
+        clearTimeout(timeout);
         controller.close();
       }
     },
