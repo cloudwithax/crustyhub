@@ -7,6 +7,14 @@ import { validateSlug } from "../git/paths";
 import { validateDescription, validateSearchQuery } from "../middleware/input-validator";
 import { getClientIp } from "../middleware/rate-limiter";
 import { scoreWriteRequest, isBanned, checkBannedPatterns } from "../middleware/spam-detector";
+import { getOrCreateCsrfToken } from "../middleware/csrf";
+
+function getSessionId(request: Request): string {
+  const cookies = request.headers.get("cookie") || "";
+  const match = cookies.match(/crustyhub_session=([^;]+)/);
+  if (match) return match[1];
+  return Math.random().toString(36).slice(2);
+}
 
 export const homeRoutes = new Elysia()
   .get("/", async ({ query }) => {
@@ -31,9 +39,14 @@ export const homeRoutes = new Elysia()
       headers: { "content-type": "text/html" },
     });
   })
-  .get("/new", () => {
-    return new Response(newRepoPage(), {
-      headers: { "content-type": "text/html" },
+  .get("/new", ({ request }) => {
+    const sessionId = getSessionId(request);
+    const csrfToken = getOrCreateCsrfToken(sessionId);
+    return new Response(newRepoPage(undefined, csrfToken), {
+      headers: {
+        "content-type": "text/html",
+        "set-cookie": `crustyhub_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`,
+      },
     });
   })
   .post("/new", async ({ body, request }) => {

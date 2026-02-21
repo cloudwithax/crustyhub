@@ -10,6 +10,14 @@ import {
 } from "../middleware/input-validator";
 import { getClientIp } from "../middleware/rate-limiter";
 import { scoreWriteRequest, isBanned, checkBannedPatterns } from "../middleware/spam-detector";
+import { getOrCreateCsrfToken } from "../middleware/csrf";
+
+function getSessionId(request: Request): string {
+  const cookies = request.headers.get("cookie") || "";
+  const match = cookies.match(/crustyhub_session=([^;]+)/);
+  if (match) return match[1];
+  return Math.random().toString(36).slice(2);
+}
 
 function html(body: string, status = 200): Response {
   return new Response(body, { status, headers: { "content-type": "text/html" } });
@@ -29,10 +37,12 @@ export const issueRoutes = new Elysia()
 
     return html(issuesPage(repo, issues, state, openCount, closedCount));
   })
-  .get("/:slug/issues/new", async ({ params }) => {
+  .get("/:slug/issues/new", async ({ params, request }) => {
     const repo = await findRepoBySlug(params.slug);
     if (!repo) return html("<h1>404</h1>", 404);
-    return html(newIssuePage(repo));
+    const sessionId = getSessionId(request);
+    const csrfToken = getOrCreateCsrfToken(sessionId);
+    return html(newIssuePage(repo, undefined, csrfToken));
   })
   .post("/:slug/issues/new", async ({ params, body, request }) => {
     const repo = await findRepoBySlug(params.slug);
@@ -68,7 +78,7 @@ export const issueRoutes = new Elysia()
       headers: { location: `/${params.slug}/issues/${issue.number}` },
     });
   })
-  .get("/:slug/issues/:number", async ({ params }) => {
+  .get("/:slug/issues/:number", async ({ params, request }) => {
     const repo = await findRepoBySlug(params.slug);
     if (!repo) return html("<h1>404</h1>", 404);
 
@@ -82,7 +92,10 @@ export const issueRoutes = new Elysia()
     const renderedBody = renderMarkdown(issue.body_markdown);
     const renderedComments = comments.map((c) => renderMarkdown(c.body_markdown));
 
-    return html(issueDetailPage(repo, issue, comments, renderedBody, renderedComments));
+    const sessionId = getSessionId(request);
+    const csrfToken = getOrCreateCsrfToken(sessionId);
+
+    return html(issueDetailPage(repo, issue, comments, renderedBody, renderedComments, csrfToken));
   })
   .post("/:slug/issues/:number/comment", async ({ params, body, request }) => {
     const repo = await findRepoBySlug(params.slug);

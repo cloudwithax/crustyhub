@@ -16,6 +16,7 @@ import { validateSlug } from "../git/paths";
 import { validateDescription } from "../middleware/input-validator";
 import { getClientIp } from "../middleware/rate-limiter";
 import { isBanned } from "../middleware/spam-detector";
+import { getOrCreateCsrfToken } from "../middleware/csrf";
 
 function getSessionId(request: Request): string {
   const cookies = request.headers.get("cookie") || "";
@@ -61,10 +62,11 @@ export const repoRoutes = new Elysia()
 
     const starred = await isStarred(repo.id, sessionId);
     const openIssues = await getIssueCount(repo.id, "open");
+    const csrfToken = getOrCreateCsrfToken(sessionId);
 
     const setCookie = `crustyhub_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`;
     return html(
-      repoHomePage(repo, branches, tags, tree, log, readme, defaultBranch, hasC, starred, openIssues),
+      repoHomePage(repo, branches, tags, tree, log, readme, defaultBranch, hasC, starred, openIssues, csrfToken),
       200,
       { "set-cookie": setCookie }
     );
@@ -132,13 +134,15 @@ export const repoRoutes = new Elysia()
       },
     });
   })
-  .get("/:slug/settings", async ({ params, query }) => {
+  .get("/:slug/settings", async ({ params, query, request }) => {
     const repo = await findRepoBySlug(params.slug);
     if (!repo) return html("<h1>404</h1>", 404);
 
+    const sessionId = getSessionId(request);
+    const csrfToken = getOrCreateCsrfToken(sessionId);
     const branches = await listBranches(params.slug);
     const msg = (query as any).msg as string | undefined;
-    return html(settingsPage(repo, branches, msg));
+    return html(settingsPage(repo, branches, msg, csrfToken));
   })
   .post("/:slug/settings", async ({ params, body }) => {
     const repo = await findRepoBySlug(params.slug);
