@@ -57,6 +57,7 @@ export async function deleteRepo(slug: string): Promise<void> {
   }
 
   await reposDb.softDeleteRepo(repo.id);
+  await reposDb.deleteBundle(repo.id);
 }
 
 export async function forkRepo(sourceSlug: string, newSlug: string): Promise<reposDb.Repo> {
@@ -78,7 +79,13 @@ export async function forkRepo(sourceSlug: string, newSlug: string): Promise<rep
     throw new Error(`fork failed: ${err}`);
   }
 
-  return reposDb.createRepo(newSlug, `Fork of ${sourceSlug}`, "fork", null, source.id);
+  const newRepo = await reposDb.createRepo(newSlug, `Fork of ${sourceSlug}`, "fork", null, source.id);
+
+  // Bundle the forked repo to DB immediately
+  const tarball = tarDirectory(dstPath);
+  await reposDb.saveBundle(newRepo.id, tarball);
+
+  return newRepo;
 }
 
 export function tarDirectory(dirPath: string): Buffer {
