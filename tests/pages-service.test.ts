@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { parsePagesConfig, type PagesConfig } from "../src/services/pages-service";
+import { parsePagesConfig, getMimeType, type PagesConfig } from "../src/services/pages-service";
 
 describe("parsePagesConfig", () => {
   test("parses full .pages TOML config", () => {
@@ -41,5 +41,31 @@ describe("parsePagesConfig", () => {
   test("rejects directory with path traversal", () => {
     const config = parsePagesConfig(`[pages]\ndirectory = "../evil"`);
     expect(config).toBeNull();
+  });
+});
+
+describe("getMimeType", () => {
+  test("returns correct type for html", () => {
+    expect(getMimeType("index.html")).toBe("text/html; charset=utf-8");
+  });
+
+  test("returns correct type for css", () => {
+    expect(getMimeType("styles.css")).toBe("text/css; charset=utf-8");
+  });
+
+  test("returns correct type for js", () => {
+    expect(getMimeType("app.js")).toBe("application/javascript; charset=utf-8");
+  });
+
+  test("returns correct type for wasm", () => {
+    expect(getMimeType("game.wasm")).toBe("application/wasm");
+  });
+
+  test("returns octet-stream for unknown extensions", () => {
+    expect(getMimeType("data.xyz")).toBe("application/octet-stream");
+  });
+
+  test("handles nested paths", () => {
+    expect(getMimeType("assets/images/logo.png")).toBe("image/png");
   });
 });
