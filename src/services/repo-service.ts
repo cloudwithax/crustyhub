@@ -4,6 +4,7 @@ import { repoPath, trashPath, validateSlug } from "../git/paths";
 import { gitInit } from "../git/git-spawn";
 import * as reposDb from "../db/repos";
 import { REPOS_DIR, TRASH_DIR } from "../config/env";
+import { checkDiskSpace } from "../middleware/git-guard";
 
 export async function ensureDirectories() {
   await mkdir(REPOS_DIR, { recursive: true });
@@ -12,6 +13,9 @@ export async function ensureDirectories() {
 
 export async function createRepo(slug: string, description = "", createdVia = "web"): Promise<reposDb.Repo> {
   if (!validateSlug(slug)) throw new Error("invalid repository name");
+
+  const diskBlock = await checkDiskSpace();
+  if (diskBlock) throw new Error("server disk space critically low");
 
   const path = repoPath(slug);
   if (existsSync(path)) {
@@ -25,6 +29,9 @@ export async function createRepo(slug: string, description = "", createdVia = "w
 
 export async function ensureRepoForPush(slug: string): Promise<void> {
   if (!validateSlug(slug)) throw new Error("invalid repository name");
+
+  const diskBlock = await checkDiskSpace();
+  if (diskBlock) throw new Error("server disk space critically low");
 
   const path = repoPath(slug);
   if (existsSync(path)) return;
