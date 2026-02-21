@@ -3,12 +3,13 @@ import { existsSync } from "fs";
 import { repoPath, trashPath, validateSlug } from "../git/paths";
 import { gitInit } from "../git/git-spawn";
 import * as reposDb from "../db/repos";
-import { REPOS_DIR, TRASH_DIR } from "../config/env";
+import { REPOS_DIR, TRASH_DIR, PAGES_CACHE_DIR } from "../config/env";
 import { checkDiskSpace } from "../middleware/git-guard";
 
 export async function ensureDirectories() {
   await mkdir(REPOS_DIR, { recursive: true });
   await mkdir(TRASH_DIR, { recursive: true });
+  await mkdir(PAGES_CACHE_DIR, { recursive: true });
 }
 
 export async function createRepo(slug: string, description = "", createdVia = "web"): Promise<reposDb.Repo> {
