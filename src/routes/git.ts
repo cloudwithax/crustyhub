@@ -1,5 +1,5 @@
 import { handleGitRequest } from "../git/http-backend";
-import { ensureRepoForPush } from "../services/repo-service";
+import { ensureRepoForPush, bundleRepo } from "../services/repo-service";
 import { validateSlug } from "../git/paths";
 import { touchRepo } from "../db/repos";
 import { invalidateCache } from "../services/pages-service";
@@ -61,6 +61,7 @@ export async function handleGitHttp(request: Request): Promise<Response | undefi
       );
       touchRepo(slug).catch(() => {});
       invalidateCache(slug).catch(() => {});
+      bundleRepo(slug).catch(() => {});
       return resp;
     }
 
