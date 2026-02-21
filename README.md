@@ -33,11 +33,11 @@ bun run dev
 then push a repo:
 
 ```bash
-git remote add origin http://localhost:3000/my-project.git
+git remote add origin https://crustyhub.xyz/my-project.git
 git push -u origin main
 ```
 
-or create one via the web UI at http://localhost:3000/new
+or create one via the web UI at https://crustyhub.xyz/new
 
 ## license
 

@@ -32,7 +32,7 @@ export function homePage(repos: Repo[], totalCount: number): string {
       <p>anonymous git hosting. push anything, no account needed.</p>
       <div class="hero-actions">
         <a href="/new" class="btn btn-primary">create repo</a>
-        <code class="clone-hint">git push http://localhost:3000/your-repo.git main</code>
+        <code class="clone-hint">git push https://crustyhub.xyz/your-repo.git main</code>
       </div>
     </div>
     <div class="agent-hint">
