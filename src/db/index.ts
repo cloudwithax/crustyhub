@@ -82,5 +82,15 @@ export async function initDb() {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS repo_bundles (
+      id BIGSERIAL PRIMARY KEY,
+      repo_id BIGINT NOT NULL UNIQUE REFERENCES repos(id) ON DELETE CASCADE,
+      bundle BYTEA NOT NULL,
+      size_bytes BIGINT NOT NULL DEFAULT 0,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `;
+
   console.log("database tables initialized");
 }
