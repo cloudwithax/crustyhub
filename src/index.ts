@@ -7,6 +7,7 @@ import { repoRoutes } from "./routes/repo";
 import { issueRoutes } from "./routes/issues";
 import { handleGitHttp } from "./routes/git";
 import { skillRoute } from "./routes/skill";
+import { handlePagesRequest } from "./routes/pages";
 import { join } from "path";
 import { readFileSync, existsSync } from "fs";
 import { getClientIp, classifyRequest, checkRateLimit } from "./middleware/rate-limiter";
@@ -53,6 +54,10 @@ Bun.serve({
     const category = classifyRequest(request.method, url.pathname);
     const rateLimited = checkRateLimit(ip, category);
     if (rateLimited) return rateLimited;
+
+    // Pages subdomain requests
+    const pagesResponse = await handlePagesRequest(request);
+    if (pagesResponse) return pagesResponse;
 
     // Git routes handled separately (no CSRF)
     const gitResponse = await handleGitHttp(request);
