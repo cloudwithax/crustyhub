@@ -35,7 +35,7 @@ export function newIssuePage(repo: Repo, error?: string, csrfToken?: string): st
     </div>
     ${error ? `<div class="alert alert-error">${escHtml(error)}</div>` : ""}
     <form method="POST" action="/${escHtml(repo.slug)}/issues/new" class="form">
-        ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
+        ${csrfToken ? `<input type="hidden" name="_csrf" value="${escHtml(csrfToken)}">` : ""}
       <div class="form-group">
         <label for="title">title</label>
         <input type="text" id="title" name="title" required autofocus>
@@ -81,7 +81,7 @@ export function issueDetailPage(repo: Repo, issue: Issue, comments: { body_markd
     <div class="comment-form">
       <h3>add a comment</h3>
       <form method="POST" action="/${escHtml(repo.slug)}/issues/${issue.number}/comment" class="form">
-          ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
+          ${csrfToken ? `<input type="hidden" name="_csrf" value="${escHtml(csrfToken)}">` : ""}
         <div class="form-group">
           <textarea name="body" rows="5" required placeholder="leave a comment (markdown supported)"></textarea>
         </div>
@@ -91,7 +91,7 @@ export function issueDetailPage(repo: Repo, issue: Issue, comments: { body_markd
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">comment</button>
           <form method="POST" action="/${escHtml(repo.slug)}/issues/${issue.number}/toggle" style="display:inline">
-            ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
+            ${csrfToken ? `<input type="hidden" name="_csrf" value="${escHtml(csrfToken)}">` : ""}
             <button type="submit" class="btn btn-sm">${issue.state === "open" ? "close issue" : "reopen issue"}</button>
           </form>
         </div>

@@ -63,17 +63,18 @@ Bun.serve({
       const cookies = request.headers.get("cookie") || "";
       const sessionMatch = cookies.match(/crustyhub_session=([^;]+)/);
       const sessionId = sessionMatch ? sessionMatch[1] : "";
-      if (sessionId) {
-        const cloned = request.clone();
-        try {
-          const formData = await cloned.formData();
-          const csrfToken = formData.get("_csrf") as string | null;
-          if (!validateCsrfToken(sessionId, csrfToken || undefined)) {
-            return csrfErrorResponse();
-          }
-        } catch {
-          // If body isn't form data, skip CSRF
+      if (!sessionId) {
+        return csrfErrorResponse();
+      }
+      const cloned = request.clone();
+      try {
+        const formData = await cloned.formData();
+        const csrfToken = formData.get("_csrf") as string | null;
+        if (!validateCsrfToken(sessionId, csrfToken || undefined)) {
+          return csrfErrorResponse();
         }
+      } catch {
+        return csrfErrorResponse();
       }
     }
 

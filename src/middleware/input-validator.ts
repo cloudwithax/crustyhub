@@ -61,9 +61,3 @@ export function validateSearchQuery(value: string | undefined): { clean: string;
   return { clean };
 }
 
-export function validateForkName(value: string | undefined): { clean: string; error?: string } {
-  if (!value || !value.trim()) {
-    return { clean: "", error: "fork name is required" };
-  }
-  return { clean: value.trim() };
-}

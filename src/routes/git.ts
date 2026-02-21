@@ -52,9 +52,6 @@ export async function handleGitHttp(request: Request): Promise<Response | undefi
       const sizeBlock = checkPushSize(request);
       if (sizeBlock) return sizeBlock;
 
-      const quotaBlock = checkRepoCreationQuota(ip);
-      if (quotaBlock) return quotaBlock;
-
       await ensureRepoForPush(slug);
       const resp = await handleGitRequest(
         "POST", `/${slug}.git/git-receive-pack`, "",

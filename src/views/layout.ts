@@ -49,4 +49,3 @@ export function timeAgo(date: Date | string): string {
   return `${Math.floor(months / 12)}y ago`;
 }
 
-export { csrfHiddenInput } from "../middleware/csrf";

@@ -1,4 +1,4 @@
-import { layout } from "../layout";
+import { layout, escHtml } from "../layout";
 
 export function newRepoPage(error?: string, csrfToken?: string): string {
   return layout("new repo", `
@@ -7,7 +7,7 @@ export function newRepoPage(error?: string, csrfToken?: string): string {
       <p>or just <code>git push</code> to any url and it'll be created automatically.</p>
       ${error ? `<div class="alert alert-error">${error}</div>` : ""}
       <form method="POST" action="/new" class="form">
-        ${csrfToken ? `<input type="hidden" name="_csrf" value="${csrfToken}">` : ""}
+        ${csrfToken ? `<input type="hidden" name="_csrf" value="${escHtml(csrfToken)}">` : ""}
         <div class="form-group">
           <label for="slug">repository name</label>
           <input type="text" id="slug" name="slug" required

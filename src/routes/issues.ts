@@ -133,9 +133,13 @@ export const issueRoutes = new Elysia()
       headers: { location: `/${params.slug}/issues/${issueNumber}` },
     });
   })
-  .post("/:slug/issues/:number/toggle", async ({ params }) => {
+  .post("/:slug/issues/:number/toggle", async ({ params, request }) => {
     const repo = await findRepoBySlug(params.slug);
     if (!repo) return new Response("not found", { status: 404 });
+
+    const ip = getClientIp(request);
+    const banBlock = isBanned(ip);
+    if (banBlock) return banBlock;
 
     const issueNumber = parseInt(params.number as string, 10);
     const issue = await issuesDb.getIssue(repo.id, issueNumber);
