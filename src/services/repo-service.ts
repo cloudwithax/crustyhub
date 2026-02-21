@@ -37,9 +37,20 @@ export async function ensureRepoForPush(slug: string): Promise<void> {
   const path = repoPath(slug);
   if (existsSync(path)) return;
 
+  // Try restoring from DB bundle first
+  const existing = await reposDb.findRepoBySlug(slug);
+  if (existing) {
+    const bundle = await reposDb.getBundle(existing.id);
+    if (bundle) {
+      await mkdir(path, { recursive: true });
+      untarToDirectory(bundle, path);
+      return;
+    }
+  }
+
+  // Fresh repo
   await gitInit(path);
 
-  const existing = await reposDb.findRepoBySlug(slug);
   if (!existing) {
     await reposDb.createRepo(slug, "", "push");
   }
