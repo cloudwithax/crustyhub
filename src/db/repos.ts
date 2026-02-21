@@ -96,3 +96,34 @@ export async function searchRepos(query: string, limit = 50): Promise<Repo[]> {
     LIMIT ${limit}
   `;
 }
+
+export async function saveBundle(repoId: number, bundle: Buffer): Promise<void> {
+  await sql`
+    INSERT INTO repo_bundles (repo_id, bundle, size_bytes, updated_at)
+    VALUES (${repoId}, ${bundle}, ${bundle.length}, now())
+    ON CONFLICT (repo_id) DO UPDATE SET
+      bundle = ${bundle},
+      size_bytes = ${bundle.length},
+      updated_at = now()
+  `;
+}
+
+export async function getBundle(repoId: number): Promise<Buffer | null> {
+  const rows = await sql<{ bundle: Buffer }[]>`
+    SELECT bundle FROM repo_bundles WHERE repo_id = ${repoId}
+  `;
+  return rows[0]?.bundle ?? null;
+}
+
+export async function deleteBundle(repoId: number): Promise<void> {
+  await sql`DELETE FROM repo_bundles WHERE repo_id = ${repoId}`;
+}
+
+export async function getAllBundles(): Promise<{ repo_id: number; slug: string; bundle: Buffer }[]> {
+  return sql<{ repo_id: number; slug: string; bundle: Buffer }[]>`
+    SELECT rb.repo_id, r.slug, rb.bundle
+    FROM repo_bundles rb
+    JOIN repos r ON r.id = rb.repo_id
+    WHERE r.deleted_at IS NULL
+  `;
+}
