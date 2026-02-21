@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { PORT, HOST, BASE_URL } from "./config/env";
 import { initDb } from "./db/index";
-import { ensureDirectories } from "./services/repo-service";
+import { ensureDirectories, restoreRepos } from "./services/repo-service";
 import { homeRoutes } from "./routes/home";
 import { repoRoutes } from "./routes/repo";
 import { issueRoutes } from "./routes/issues";
@@ -17,6 +17,7 @@ const STATIC_DIR = join(process.cwd(), "public");
 
 await ensureDirectories();
 await initDb();
+await restoreRepos();
 
 const app = new Elysia()
   .get("/public/*", ({ params }) => {
