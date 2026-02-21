@@ -4,14 +4,24 @@ import { homePage } from "../views/pages/home";
 import { newRepoPage } from "../views/pages/new-repo";
 import { createRepo } from "../services/repo-service";
 import { validateSlug } from "../git/paths";
+import { validateDescription, validateSearchQuery } from "../middleware/input-validator";
+import { getClientIp } from "../middleware/rate-limiter";
+import { scoreWriteRequest, isBanned, checkBannedPatterns } from "../middleware/spam-detector";
 
 export const homeRoutes = new Elysia()
   .get("/", async ({ query }) => {
     const q = (query as any).q as string | undefined;
+    const { clean: cleanQ, error: qError } = validateSearchQuery(q);
+    if (qError) {
+      return new Response(homePage([], 0), {
+        status: 400,
+        headers: { "content-type": "text/html" },
+      });
+    }
     let repos;
     let count;
-    if (q) {
-      repos = await searchRepos(q);
+    if (cleanQ) {
+      repos = await searchRepos(cleanQ);
       count = repos.length;
     } else {
       repos = await listRepos();
@@ -26,7 +36,11 @@ export const homeRoutes = new Elysia()
       headers: { "content-type": "text/html" },
     });
   })
-  .post("/new", async ({ body }) => {
+  .post("/new", async ({ body, request }) => {
+    const ip = getClientIp(request);
+    const banBlock = isBanned(ip);
+    if (banBlock) return banBlock;
+
     const { slug, description } = body as { slug: string; description?: string };
 
     if (!slug || !validateSlug(slug)) {
@@ -36,8 +50,22 @@ export const homeRoutes = new Elysia()
       });
     }
 
+    const { clean: cleanDesc, error: descError } = validateDescription(description);
+    if (descError) {
+      return new Response(newRepoPage(descError), {
+        status: 400,
+        headers: { "content-type": "text/html" },
+      });
+    }
+
+    const bannedBlock = checkBannedPatterns(slug, cleanDesc);
+    if (bannedBlock) return bannedBlock;
+
+    const spamBlock = scoreWriteRequest(ip, { description: cleanDesc });
+    if (spamBlock) return spamBlock;
+
     try {
-      await createRepo(slug, description || "");
+      await createRepo(slug, cleanDesc);
       return new Response(null, {
         status: 302,
         headers: { location: `/${slug}` },

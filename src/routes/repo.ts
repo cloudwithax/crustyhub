@@ -13,6 +13,9 @@ import {
 } from "../git/read";
 import { deleteRepo, forkRepo } from "../services/repo-service";
 import { validateSlug } from "../git/paths";
+import { validateDescription } from "../middleware/input-validator";
+import { getClientIp } from "../middleware/rate-limiter";
+import { isBanned } from "../middleware/spam-detector";
 
 function getSessionId(request: Request): string {
   const cookies = request.headers.get("cookie") || "";
@@ -142,14 +145,22 @@ export const repoRoutes = new Elysia()
     if (!repo) return html("<h1>404</h1>", 404);
 
     const { description, default_branch } = body as { description?: string; default_branch?: string };
-    await updateRepo(repo.id, { description, default_branch });
+    const { clean: cleanDesc, error: descError } = validateDescription(description);
+    if (descError) {
+      return html(settingsPage(repo, await listBranches(params.slug), descError), 400);
+    }
+    await updateRepo(repo.id, { description: cleanDesc, default_branch });
 
     return new Response(null, {
       status: 302,
       headers: { location: `/${params.slug}/settings?msg=saved` },
     });
   })
-  .post("/:slug/delete", async ({ params }) => {
+  .post("/:slug/delete", async ({ params, request }) => {
+    const ip = getClientIp(request);
+    const banBlock = isBanned(ip);
+    if (banBlock) return banBlock;
+
     try {
       await deleteRepo(params.slug);
       return new Response(null, { status: 302, headers: { location: "/" } });
@@ -157,7 +168,11 @@ export const repoRoutes = new Elysia()
       return new Response(null, { status: 302, headers: { location: `/${params.slug}/settings` } });
     }
   })
-  .post("/:slug/fork", async ({ params, body }) => {
+  .post("/:slug/fork", async ({ params, body, request }) => {
+    const ip = getClientIp(request);
+    const banBlock = isBanned(ip);
+    if (banBlock) return banBlock;
+
     const { fork_name } = body as { fork_name: string };
     if (!fork_name || !validateSlug(fork_name)) {
       return new Response(null, { status: 302, headers: { location: `/${params.slug}/settings` } });
