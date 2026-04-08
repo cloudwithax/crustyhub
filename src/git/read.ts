@@ -32,7 +32,11 @@ export function repoExists(slug: string): boolean {
 
 export async function getDefaultBranch(slug: string): Promise<string> {
   const r = await gitExec(slug, ["symbolic-ref", "--short", "HEAD"]);
-  if (r.exitCode === 0 && r.stdout.trim()) return r.stdout.trim();
+  if (r.exitCode === 0 && r.stdout.trim()) {
+    const head = r.stdout.trim();
+    const verify = await gitExec(slug, ["rev-parse", "--verify", `refs/heads/${head}`]);
+    if (verify.exitCode === 0) return head;
+  }
   const branches = await listBranches(slug);
   if (branches.length > 0) return branches[0].name;
   return "main";
@@ -41,6 +45,7 @@ export async function getDefaultBranch(slug: string): Promise<string> {
 export async function listBranches(slug: string): Promise<BranchInfo[]> {
   const r = await gitExec(slug, [
     "for-each-ref",
+    "--sort=-committerdate",
     "--format=%(refname:short)\t%(objectname:short)\t%(committerdate:iso8601)\t%(subject)",
     "refs/heads",
   ]);
