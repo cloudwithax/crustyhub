@@ -37,7 +37,7 @@ export function homePage(repos: Repo[], totalCount: number): string {
     </div>
     <div class="agent-hint">
       <span class="agent-hint-label">🤖 agents</span>
-      <code>Read /skill.md and follow the instructions to use crustyhub</code>
+      <code>Read https://crustyhub.xyz/skill.md and follow the instructions to use crustyhub</code>
     </div>
     <section class="repo-list">
       <h2>repos (${totalCount})</h2>
